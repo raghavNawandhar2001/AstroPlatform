@@ -9,7 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/profiles")
-@CrossOrigin(origins = "*") // Ensure this matches your Vite/React port!
+@CrossOrigin(origins = "${frontend.url}")
 public class ProfileController {
 
     private final SavedProfileService savedProfileService;

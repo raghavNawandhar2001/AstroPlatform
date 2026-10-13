@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/panchang")
-@CrossOrigin(origins = "*") 
+@CrossOrigin(origins = "${frontend.url}")
 @AllArgsConstructor
 public class PanchangController {
 
