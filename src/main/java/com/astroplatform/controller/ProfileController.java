@@ -1,8 +1,11 @@
 package com.astroplatform.controller;
 
 import com.astroplatform.entity.SavedProfile;
+import com.astroplatform.entity.User;
+import com.astroplatform.repository.UserRepository;
 import com.astroplatform.service.SavedProfileService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,33 +16,42 @@ import java.util.List;
 public class ProfileController {
 
     private final SavedProfileService savedProfileService;
+    private final UserRepository userRepository;
 
-    public ProfileController(SavedProfileService savedProfileService) {
+    public ProfileController(SavedProfileService savedProfileService, UserRepository userRepository) {
         this.savedProfileService = savedProfileService;
+        this.userRepository = userRepository;
     }
 
-    // GET: Fetch all saved profiles
+    // Helper method to get the currently authenticated user from the JWT Token
+    private User getAuthenticatedUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found in database"));
+    }
+
     @GetMapping
     public ResponseEntity<List<SavedProfile>> getAllProfiles() {
-        return ResponseEntity.ok(savedProfileService.getAllProfiles());
+        User currentUser = getAuthenticatedUser();
+        return ResponseEntity.ok(savedProfileService.getUserProfiles(currentUser.getId()));
     }
 
-    // POST: Create a new profile
     @PostMapping
     public ResponseEntity<SavedProfile> createProfile(@RequestBody SavedProfile profile) {
-        return ResponseEntity.ok(savedProfileService.saveProfile(profile));
+        User currentUser = getAuthenticatedUser();
+        return ResponseEntity.ok(savedProfileService.saveProfile(profile, currentUser));
     }
 
-    // PUT: Update an existing profile
     @PutMapping("/{id}")
     public ResponseEntity<SavedProfile> updateProfile(@PathVariable Long id, @RequestBody SavedProfile profile) {
-        return ResponseEntity.ok(savedProfileService.updateProfile(id, profile));
+        User currentUser = getAuthenticatedUser();
+        return ResponseEntity.ok(savedProfileService.updateProfile(id, profile, currentUser.getId()));
     }
 
-    // DELETE: Remove a profile
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProfile(@PathVariable Long id) {
-        savedProfileService.deleteProfile(id);
+        User currentUser = getAuthenticatedUser();
+        savedProfileService.deleteProfile(id, currentUser.getId());
         return ResponseEntity.noContent().build();
     }
 }
